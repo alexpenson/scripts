@@ -1,4 +1,26 @@
-#!/usr/bin/env Rscript
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2013.01.30.23.32.46;	author apenson;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@#!/usr/bin/env Rscript
 
 args <- commandArgs(trailingOnly = TRUE)
 inputfile <- args[1]
@@ -20,3 +42,4 @@ names(stringset) <- subset$sseqid
 
 writeXStringSet(stringset, format="fastq", file=outputfile)
 
+@

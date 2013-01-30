@@ -1,0 +1,20 @@
+#!/usr/bin/env Rscript
+
+args <- commandArgs(trailingOnly = TRUE)
+
+cat('args\n')
+
+suppressPackageStartupMessages(require(xlsx))
+suppressPackageStartupMessages(require(ShortRead))
+
+cat('lib\n')
+report <- read.xlsx(args, 1)
+row.names(report) <- report$qseqid
+
+cat('file\n')
+head(report)
+
+stringset <- DNAStringSet(report$qseq)
+names(stringset) <- report$sseqid
+
+writeXStringSet(stringset, file=stdout())
