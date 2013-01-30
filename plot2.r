@@ -1,0 +1,10 @@
+#!/usr/bin/env Rscript
+d <- read.table(file("stdin"), header=T, row.names=1 )
+d$fexon=ifelse(d$exon == 0, 0, d$exon/d$total)
+d$fintron=ifelse(d$intron == 0, 0, d$intron/d$total)
+print(d)
+print(d$intron[X])
+pdf('rplot.pdf')
+plot(d$fintron)
+lines(d$fexon)
+dev.off()

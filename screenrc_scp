@@ -1,0 +1,23 @@
+escape `e
+altscreen on
+defscrollback 4096
+shelltitle ''
+
+term xterm-256color
+termcapinfo xterm ti@:te@
+
+#change the hardstatus settings to give an window list at the bottom of the
+#screen, with the time and date and with the current window highlighted
+hardstatus alwayslastline
+hardstatus string '%{= kG}[ %{G}%H %{g}][%= %{= kw}%?%-Lw%?%{r}(%{W}%n*%f%t%?(%u)%?%{r})%{w}%?%+Lw%?%?%= %{g}][%{G} %d/%m %{W}%c %{g}]'
+
+screen -t scp9 9 run9.sh
+screen -t scp8 8 run8.sh
+screen -t scp7 7 run7.sh
+screen -t scp6 6 run6.sh
+screen -t scp5 5 run5.sh
+screen -t scp4 4 run4.sh
+screen -t scp3 3 run3.sh
+screen -t scp2 2 run2.sh
+screen -t scp1 1 run1.sh
+screen -t scp0 0 run0.sh
