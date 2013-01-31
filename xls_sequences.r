@@ -6,6 +6,7 @@ outputfile <- args[2]
 write('args', stderr())
 
 suppressPackageStartupMessages(require(xlsx))
+suppressPackageStartupMessages(require(tools))
 suppressPackageStartupMessages(require(ShortRead))
 write('lib', stderr())
 
@@ -18,5 +19,5 @@ subset <- report[report$taxid == 68887,]
 stringset <- DNAStringSet(subset$qseq)
 names(stringset) <- subset$sseqid
 
-writeXStringSet(stringset, format="fastq", file=outputfile)
+writeXStringSet(stringset, format=file_ext(outputfile), file=outputfile)
 
