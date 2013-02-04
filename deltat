@@ -1,0 +1,8 @@
+#!/bin/bash
+logfile=$1
+end=$(date -d "$(grep '\[End\]' $logfile | cut -d" " -f2-)" +%s)
+#echo $end
+start=$(date -d "$(grep '\[Start\]' $logfile | cut -d" " -f2-)" +%s)
+
+#echo $(( $end - $start))
+date --utc -d '@'$(( $end - $start)) '+%T'

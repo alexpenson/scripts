@@ -1,0 +1,8 @@
+#!/bin/awk -f
+# convert bed format (chr pos1 pos2 etc...) 
+# to files for segsmerge
+BEGIN { OFS="\t"; }
+{
+    sub(/^chr/,"");
+    print $2,$3,100,$4 >> "chr"$1".segs";
+}

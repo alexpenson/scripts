@@ -1,0 +1,11 @@
+#!/bin/awk -f
+# convert pos format (id chr pos) 
+# to a file for segsmerge
+BEGIN { OFS="\t"; }
+{
+    if ( $2 != "M" ) {
+#	filename = sprintf("chr/chr%02d.segs", $2);
+	filename = sprintf("chr/chr%d.segs", $2);
+	print $3,$3+75,100 >> filename
+    }
+}

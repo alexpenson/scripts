@@ -1,0 +1,3 @@
+#!/bin/awk -f
+# find size of the header of a SAM file
+!/^@/ { print NR-1; exit } 

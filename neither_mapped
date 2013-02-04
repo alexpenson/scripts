@@ -1,0 +1,22 @@
+#!/bin/bash
+# looks for reads that
+# first file: SAM file mapped to genome (sorted by name)
+# second file: SAM file mapped to transcriptome (also sorted by name)
+# writes bed file
+paste <(awk '!/^@/ {print $1,$2,$10}' $1) <(awk '!/^@/ {print $1,$2}' $2) -d" " | \
+awk 'BEGIN { FS=" "; OFS="\t";}
+{
+    ## columns of intermediate file are: 
+    id=$1; 
+    flag=$2;
+    seq=$3;
+    id_transc=$4;
+    flag_transc=$5;
+    if ( id == id_transc ) {
+        unmapped_genome = and(flag, 0x4);
+        unmapped_transc = and(flag_transc, 0x4);
+        if ( unmapped_transc && unmapped_genome ) {
+             print ">"id"\n"seq
+        }
+    }
+}'

@@ -1,0 +1,6 @@
+#!/bin/awk -f
+BEGIN{OFS="\t"} 
+{
+    sub(/_report/,"",FILENAME)
+    print FILENAME,$0
+}

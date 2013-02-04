@@ -1,0 +1,8 @@
+#!/bin/awk -f
+# extract id from fastq file
+{
+    if (NR%4 == 1){
+	sub(/@/,"");
+	print;
+    }
+}

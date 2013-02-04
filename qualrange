@@ -1,0 +1,3 @@
+#!/bin/bash
+perl -ne 'use strict; chomp ($_); my $j; my $inputline=$_; for ($j= 0; $j < length($inputline); $j++) {print ord(substr($inputline,$j,1))."\n"}' | sort -u -n | awk '{a=$1; if (NR==1) {print $0;}}END{print a}'
+
