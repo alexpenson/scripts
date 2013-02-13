@@ -11,17 +11,13 @@
 ## ${prefix}_2.unmapped.fastq
 #############################################
 
-export prefix=$1
-export input_1=$2
-export input_2=$3
-export ref_bowtie_transcriptome=$4
-# export prefix=ARC_3
-# export input_1=${prefix}_1.fastq
-# export input_2=${prefix}_2.fastq
-# export ref_bowtie_transcriptome=/ifs/scratch/c2b2/rr_lab/shares/ref/hg19/bowtie2/transcriptome/transcriptome_fasta
+export prefix=ARC_3
+export input_1=${prefix}_1.fastq
+export input_2=${prefix}_2.fastq
+export ref_bowtie_transcriptome=/ifs/scratch/c2b2/rr_lab/shares/ref/hg19/bowtie2/transcriptome/transcriptome_fasta
 
-#export njobs=2
-export njobs=124
+export njobs=2
+#export njobs=124
 export npairs_per_job=524288
 #export npairs_per_job=262144          # 2^18 (number used to estimate the insert size distribution in BWA)
 
@@ -38,7 +34,8 @@ export PATH=$PATH:/ifs/home/c2b2/rr_lab/shares/bin/bowtie2-2.0.2
 ## unpaired fastq cannot be written from paired input (--un).
 ## System env vars, including those set above, are exported to jobs (-V)
 
-qsub_output=$( cat << 'EOF' | qsub -t 1-$njobs 
+qsub_output=$( 
+cat << 'EOF' | qsub -t 1-$njobs 
 #$ -l mem=2G,time=8:: 
 #$ -pe smp 4 
 #$ -N bowtie
@@ -61,11 +58,9 @@ bowtie2 \
     --time \
     --un-conc ${prefix}_%.$SGE_TASK_ID.unmapped.fastq \
     > /dev/null
+    ## | samtools view -Sbf 4
 EOF
 )
-## Alternate redirection for unmapped BAM output
-## | samtools view -Sbf 4 > ${prefix}.$SGE_TASK_ID.unmapped.bam \
-
 echo $qsub_output
 jid=$(echo $qsub_output | cut -d" " -f3 | cut -d. -f1)
 
@@ -77,13 +72,8 @@ jid=$(echo $qsub_output | cut -d" " -f3 | cut -d. -f1)
 cat << 'EOF' | qsub -hold_jid $jid
 #$ -N merge_bowtie
 #$ -l mem=500M,time=1::
-#$ -V
-
-cat ${prefix}_1.*.unmapped.fastq > ${prefix}_1.unmapped.fastq 
+cat ${prefix}_1.*.unmapped.fastq ${prefix}_1.unmapped.fastq 
 rm  ${prefix}_1.*.unmapped.fastq 
-echo -e ${prefix}_1.unmapped.fastq \\t $(( $(wc -l < ${prefix}_1.unmapped.fastq) / 4 )) > Nreads.txt 
-cat ${prefix}_2.*.unmapped.fastq > ${prefix}_2.unmapped.fastq
+cat ${prefix}_2.*.unmapped.fastq ${prefix}_2.unmapped.fastq
 rm  ${prefix}_2.*.unmapped.fastq 
-echo -e ${prefix}_2.unmapped.fastq \\t $(( $(wc -l < ${prefix}_2.unmapped.fastq) / 4 )) >> Nreads.txt 
-## samtools merge ${prefix}.unmapped.bam ${prefix}.*.unmapped.bam
 EOF

@@ -1,0 +1,2 @@
+#!/bin/awk -f
+{if (NR%4==2) {print}}
