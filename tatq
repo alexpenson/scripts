@@ -1,0 +1,35 @@
+commit 30209b2666352c59184c30fb3472363c7e2a20f6
+Author: Alex Penson %Rabadan <avp2106@login1.titan>
+Date:   Wed Feb 13 14:04:47 2013 -0500
+
+    more scripts
+
+commit aafab0317ce9046cb6d7e011b1260c365065bbe6
+Author: Alex Penson %Rabadan <avp2106@b1a.c1.titan>
+Date:   Mon Feb 4 17:01:00 2013 +0000
+
+    README
+
+commit 322ace97cd2df9f125f8ab52d42a40b01c2efbb5
+Author: Alex Penson %Rabadan <avp2106@b1a.c1.titan>
+Date:   Mon Feb 4 16:45:59 2013 +0000
+
+    sam and fastq scripts
+
+commit 1d3faefd09926a9606900995add246dd8fa59a3b
+Author: alexpenson <alexpenson@gmail.com>
+Date:   Wed Jan 30 19:08:25 2013 -0500
+
+    format from file extension
+
+commit 85ffab859b186d9b3f37a8434602196899447cc8
+Author: alexpenson <alexpenson@gmail.com>
+Date:   Wed Jan 30 18:36:12 2013 -0500
+
+    two arguments - never worked with stdin/stdout
+
+commit f8b2dc35fbaad31b6dafaef66cab115371eb0314
+Author: Alex Penson <alexpenson@gmail.com>
+Date:   Wed Jan 30 16:08:09 2013 -0500
+
+    assorted scripts
