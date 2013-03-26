@@ -1,0 +1,86 @@
+#!/bin/bash
+filename=$1
+#filename=$(basename "$fullfilename")
+extension="${filename##*.}"
+export filebase="${filename%.*}"
+
+if [[ $extension -ne "bam" ]]; then
+    echo "BAM input only"
+    exit
+fi
+
+export picard=/ifs/home/c2b2/rr_lab/shares/picard-tools-1.84
+export gatk=/ifs/home/c2b2/rr_lab/shares/GenomeAnalysisTK-2.3-6-gebbba25
+export bundle=/ifs/scratch/c2b2/rr_lab/shares/ftp.broadinstitute.org/bundle/2.3
+
+#############################################
+## REDUCEREADS WITH GATK
+#############################################
+
+qsub_output=$( cat << 'EOF' | qsub
+#$ -l mem=7G,time=1::
+##$ -m ae
+#$ -N ReduceReads
+#$ -t 1-25
+#$ -V
+
+java -Xmx6G -jar $gatk/GenomeAnalysisTK.jar \
+    -T ReduceReads \
+    -I $filebase.bam \
+    -R $bundle/hg19/ucsc.hg19.fasta \
+    -L chr$(chr $SGE_TASK_ID) \
+    -o $filebase.reduced.chr$(chr $SGE_TASK_ID).bam 
+EOF
+)
+echo $qsub_output
+jid=$(echo $qsub_output | cut -d" " -f3 | cut -d. -f1)
+
+#############################################
+## MERGE WITH PICARD
+#############################################
+qsub_output=$( cat << 'EOF' | qsub -hold_jid $jid
+#$ -pe smp 2
+#$ -l mem=2G,time=2::
+#$ -N ReduceReads_merge
+#$ -m ae
+#$ -V
+
+java -Xmx2G \
+-jar $picard/MergeSamFiles.jar \
+OUTPUT=$filebase.reduced.bam \
+ASSUME_SORTED=true \
+USE_THREADING=true \
+INPUT=$filebase.reduced.chr1.bam \
+INPUT=$filebase.reduced.chr2.bam \
+INPUT=$filebase.reduced.chr3.bam \
+INPUT=$filebase.reduced.chr4.bam \
+INPUT=$filebase.reduced.chr5.bam \
+INPUT=$filebase.reduced.chr6.bam \
+INPUT=$filebase.reduced.chr7.bam \
+INPUT=$filebase.reduced.chr8.bam \
+INPUT=$filebase.reduced.chr9.bam \
+INPUT=$filebase.reduced.chr10.bam \
+INPUT=$filebase.reduced.chr11.bam \
+INPUT=$filebase.reduced.chr12.bam \
+INPUT=$filebase.reduced.chr13.bam \
+INPUT=$filebase.reduced.chr14.bam \
+INPUT=$filebase.reduced.chr15.bam \
+INPUT=$filebase.reduced.chr16.bam \
+INPUT=$filebase.reduced.chr17.bam \
+INPUT=$filebase.reduced.chr18.bam \
+INPUT=$filebase.reduced.chr19.bam \
+INPUT=$filebase.reduced.chr20.bam \
+INPUT=$filebase.reduced.chr21.bam \
+INPUT=$filebase.reduced.chr22.bam \
+INPUT=$filebase.reduced.chrX.bam \
+INPUT=$filebase.reduced.chrY.bam \
+INPUT=$filebase.reduced.chrM.bam
+
+samtools index $filebase.reduced.bam
+rm -rf $filebase.reduced.chr*.bam*
+EOF
+)
+echo $qsub_output
+jid=$(echo $qsub_output | cut -d" " -f3 | cut -d. -f1)
+
+export jid

@@ -1,0 +1,12 @@
+#!/bin/awk f
+/^#/ {
+    print
+#     if (NR%4==0) {
+# 	print $0
+#     }
+    
+#     if (NR%4==1) {
+# 	print $0
+#     }
+    
+}

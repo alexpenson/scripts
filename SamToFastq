@@ -1,0 +1,5 @@
+#!/bin/bash
+if $# < 2; then
+    echo usage: $0 out.fastq
+fi
+java -Xmx700m -jar /ifs/home/c2b2/rr_lab/shares/bin/picard-tools-1.71/SamToFastq.jar INPUT=/dev/stdin FASTQ=$1 QUIET=true
