@@ -4,7 +4,6 @@ args <- commandArgs(trailingOnly=TRUE)
 filename <- "rplot.pdf"
 if(length(args)) { filename <- args[[1]] } 
 
-
 d <- scan(file("stdin"), what=list(x=0), quiet=TRUE);
 
 #############################################
