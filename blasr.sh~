@@ -1,1 +1,0 @@
-cat $1 | /ifs/home/c2b2/rr_lab/shares/scripts/fastq2fasta.awk | /ifs/scratch/c2b2/rr_lab/shares/ncbi-blast-2.2.28+/bin/blastn -db /ifs/scratch/c2b2/rr_lab/shares/ref/blastdb/nt/nt -query - -outfmt "6 std staxids" -num_alignments 10
