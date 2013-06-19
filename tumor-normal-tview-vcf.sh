@@ -3,7 +3,7 @@
 ### stdin must have: chr <TAB> pos <TAB> ...
 ### prints tviews of tumor and normal samples starting at given position 
 ### and with:
-width=30
+width=50
 offset=10
 
 samtools=/ifs/scratch/c2b2/rr_lab/shares/samtools/samtools ### development version
@@ -15,6 +15,22 @@ ref_samtools_genome=/ifs/scratch/c2b2/rr_lab/shares/ref/hg19/samtools_faidx/hg19
 
 tumor_bam=$1; shift
 normal_bam=$1; shift
+
+function tview {
+    ### tview chr1:1000 file.bam
+    $samtools tview -d text -p $1 $2 $ref_samtools_genome \
+	| awk ' \
+FNR==2{  \
+    str=substr($0,1,'$offset'); \
+    gsub(/[A-Za-z]/,"", str); \
+    new_offset='$offset'+length(str)+2; \
+    printf "%"new_offset"s", "V\n"  \
+} \
+{ \
+    print \
+}' \
+	| cut -c1-$width 
+}
 
 while read line; do
     if [[ ${line:0:1} = "#" ]]; then continue; fi
@@ -29,10 +45,11 @@ while read line; do
     tput sgr0
     (
 	echo 'TUMOR@NORMAL';
-	printf '%'$offset'sV@%'$offset'sV\n';
+#	printf '%'$offset'sV@%'$offset'sV\n';
 	paste -d"@" \
-	    <($samtools tview -d text -p $pos $tumor_bam  $ref_samtools_genome | cut -c1-$width) \
-	    <($samtools tview -d texy -p $pos $normal_bam $ref_samtools_genome | cut -c1-$width) \
+	    <(tview $pos $tumor_bam) \
+	    <(tview $pos $normal_bam) \
 	    ) \
     | sed 's/^@/\ @/' | column -ts$"@"
 done
+
