@@ -1,5 +1,6 @@
 chr=$1
 
+### pipe in 
 
 # set the genome build:
 hg=hg19;

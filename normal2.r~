@@ -25,7 +25,6 @@ write(head(d$key), stderr())
 d$normal <- d$key %in% avec
 
 d$key <- NULL
-d$ref.var2 <- NULL
 d$chr <- NULL
 d$pos2 <- NULL
 

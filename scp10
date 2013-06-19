@@ -1,0 +1,21 @@
+#!/bin/zsh
+# does the ls of the arguments on karthur
+# lists the matching files in scp_files
+# makes run{0..9}.sh executables
+# executes them all with screen
+
+# you must make sure that the "screen -c ~/zsh-functions/screenrc_scp" line is pointing to the right file
+# also a good idea to add alias scp10='noglob scp10' to your .zshrc
+
+REMOTE_MACHINE=karthur.nevis.columbia.edu
+
+ssh $REMOTE_MACHINE "ls $*" > scp_files
+
+integer n=0
+for file in $(cat scp_files)
+do echo 'if [[ ! -f '$file' ]]\n    then scp -C '$REMOTE_MACHINE':'$file' .\nfi' >>! run$(( $n % 10 )).sh
+    n=$(( $n + 1 ))
+done
+chmod +x run*.sh
+screen -c ~/zsh-functions/screenrc_scp
+rm -rf run*.sh scp_files
