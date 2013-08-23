@@ -120,8 +120,8 @@ sub execute
 
     ## Open the output files ##
     
-    open(PASS, ">$output_basename.pass") or die "Can't open output file: $!\n";
-    open(FAIL, ">$output_basename.fail") or die "Can't open output file: $!\n";
+#    open(PASS, ">$output_basename.pass") or die "Can't open output file: $!\n";
+#    open(FAIL, ">$output_basename.fail") or die "Can't open output file: $!\n";
 
     ## Parse the input file ##
 
@@ -131,11 +131,14 @@ sub execute
 
     while (<$input>)
     {
-	    next if (/^#/);
-	    chomp;
+	    if (/^#/){
+		print $_;
+		next;
+	    }
+#	    chomp;
 	    my $line = $_;
 	    $lineCounter++;
-            my ($chrom, $position, $id, $ref, $var) = split(/\t/, $line);
+            my ($chrom, $position, $id, $ref, $var, $qual, $filter, $rest_of_line) = split(/\t/, $line, 8);
             $ref = uc($ref);
             $var = uc($var);
 
@@ -198,65 +201,74 @@ sub execute
 
                             ## FAILURE 1: READ POSITION ##
                             if(($var_pos < $min_read_pos)) { # || $var_pos > $max_read_pos)) {
-                                print FAIL "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tReadPos<$min_read_pos\n";
-                                print "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tReadPos<$min_read_pos\n"if ($verbose);
+				$filter = "ReadPos";
+#                                print FAIL "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tReadPos<$min_read_pos\n";
+#                                print "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tReadPos<$min_read_pos\n"if ($verbose);
                                 $stats{'num_fail_pos'}++;
                             }
 
                             ## FAILURE 2: Variant is strand-specific but reference is NOT strand-specific ##
                             elsif(($var_strandedness < $min_strandedness || $var_strandedness > $max_strandedness) && ($ref_strandedness >= $min_strandedness && $ref_strandedness <= $max_strandedness)) {
                                 ## Print failure to output file if desired ##
-                                print FAIL "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tStrandedness: Ref=$ref_strandedness Var=$var_strandedness\n";
-                                print "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tStrandedness: Ref=$ref_strandedness Var=$var_strandedness\n"if ($verbose);
+                                $filter = "Strandedness";
+#                                print FAIL "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tStrandedness: Ref=$ref_strandedness Var=$var_strandedness\n";
+#                                print "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tStrandedness: Ref=$ref_strandedness Var=$var_strandedness\n"if ($verbose);
                                 $stats{'num_fail_strand'}++;
                             }
 
                             ## FAILURE : Variant allele count does not meet minimum ##
                             elsif($var_count < $min_var_count) {
-                                print FAIL "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tVarCount:$var_count\n";
+				$filter = "VarCount";
+#                                print FAIL "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tVarCount:$var_count\n";
                                 print "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tVarCount:$var_count\n" if ($verbose);
                                 $stats{'num_fail_varcount'}++;
                             }
 
                             ## FAILURE : Variant allele frequency does not meet minimum ##
                             elsif($var_freq < $min_var_freq) {
-                                print FAIL "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tVarFreq:$var_freq\n";
-                                print "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tVarFreq:$var_freq\n" if ($verbose);
+				$filter = "VarFreq";
+#                                print FAIL "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tVarFreq:$var_freq\n";
+#                                print "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tVarFreq:$var_freq\n" if ($verbose);
                                 $stats{'num_fail_varfreq'}++;
                             }
 
                             ## FAILURE 3: Paralog filter for sites where variant allele mismatch-quality-sum is significantly higher than reference allele mmqs
                             elsif($mismatch_qualsum_diff> $max_mm_qualsum_diff) {
                                 ## Print failure to output file if desired ##
-                                print FAIL "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tMismatchQualsum:$var_mmqs-$ref_mmqs=$mismatch_qualsum_diff\n";
-                                print "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tMismatchQualsum:$var_mmqs-$ref_mmqs=$mismatch_qualsum_diff" if ($verbose);
+				$filter = "MismatchQualsum";
+#                                print FAIL "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tMismatchQualsum:$var_mmqs-$ref_mmqs=$mismatch_qualsum_diff\n";
+ #                               print "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tMismatchQualsum:$var_mmqs-$ref_mmqs=$mismatch_qualsum_diff" if ($verbose);
                                 $stats{'num_fail_mmqs'}++;
                             }
 
                             ## FAILURE 4: Mapping quality difference exceeds allowable maximum ##
                             elsif($mapqual_diff > $max_mapqual_diff) {
-                                print FAIL "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tMapQual:$ref_map_qual-$var_map_qual=$mapqual_diff\n";
-                                print "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tMapQual:$ref_map_qual-$var_map_qual=$mapqual_diff" if ($verbose);
+				$filter = "MapQual";
+#                                print FAIL "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tMapQual:$ref_map_qual-$var_map_qual=$mapqual_diff\n";
+#                                print "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tMapQual:$ref_map_qual-$var_map_qual=$mapqual_diff" if ($verbose);
                                 $stats{'num_fail_mapqual'}++;
                             }
 
                             ## FAILURE 5: Read length difference exceeds allowable maximum ##
                             elsif($readlen_diff > $max_readlen_diff) {
-                                print FAIL "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tReadLen:$ref_avg_rl-$var_avg_rl=$readlen_diff\n";
-                                print "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tReadLen:$ref_avg_rl-$var_avg_rl=$readlen_diff" if ($verbose);
+				$filter = "ReadLen";
+#                                print FAIL "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tReadLen:$ref_avg_rl-$var_avg_rl=$readlen_diff\n";
+#                                print "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tReadLen:$ref_avg_rl-$var_avg_rl=$readlen_diff" if ($verbose);
                                 $stats{'num_fail_readlen'}++;
                             }
 
                             ## FAILURE 5: Read length difference exceeds allowable maximum ##
                             elsif($var_dist_3 < $min_var_dist_3) {
-                                print FAIL "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tVarDist3:$var_dist_3\n";
-                                print "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tVarDist3:$var_dist_3\n" if ($verbose);
+				$filter = "VarDist3";
+#                                print FAIL "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tVarDist3:$var_dist_3\n";
+#                                print "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tVarDist3:$var_dist_3\n" if ($verbose);
                                 $stats{'num_fail_dist3'}++;
                             }
 
                             elsif($max_var_mm_qualsum && $var_mmqs > $max_var_mm_qualsum) {
-                                print FAIL "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tVarMMQS: $var_mmqs > $max_var_mm_qualsum\n";
-                                print "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tVarMMQS: $var_mmqs > $max_var_mm_qualsum\n" if ($verbose);
+				$filter = "VarMMQS";
+#                                print FAIL "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tVarMMQS: $var_mmqs > $max_var_mm_qualsum\n";
+#                                print "$line\t$ref_pos\t$var_pos\t$ref_strandedness\t$var_strandedness\tVarMMQS: $var_mmqs > $max_var_mm_qualsum\n" if ($verbose);
                                 $stats{'num_fail_var_mmqs'}++;
                             }
 
@@ -264,8 +276,8 @@ sub execute
                             else {
                                 $stats{'num_pass_filter'}++;
                                 ## Print output, and append strandedness information ##
-                                print PASS "$line\n";
-                                print "$line\tPASS\n" if($verbose);
+#                                print PASS "$line\n";
+#                                print "$line\tPASS\n" if($verbose);
                             }
 
                         }
@@ -273,39 +285,41 @@ sub execute
                 else
                 {
                     $stats{'num_no_readcounts'}++;
-                    print FAIL "$line\tno_readcounts\n";
+		    $filter = "NoReadCounts";
+                    print STDERR "$line\tno_readcounts\n";
                 }
             }
             else
             {
                 $stats{'num_no_readcounts'}++;
-                print FAIL "$line\tno_readcounts\n";
+		$filter = "NoReadCounts";
+                print STDERR "$line\tno_readcounts\n";
             }
    
-
+            print join "\t", ($chrom, $position, $id, $ref, $var, $qual, $filter, $rest_of_line); 
     }
     
     close($input);
     
-    close(PASS);
-    close(FAIL);
+#     close(PASS);
+#     close(FAIL);
 
     ## Print filtering stats ##
 
-    print $stats{'num_variants'} . " variants\n";
-    print $stats{'num_no_readcounts'} . " failed to get readcounts for variant allele\n";
-    print $stats{'num_fail_pos'} . " had read position < $min_read_pos\n";
-    print $stats{'num_fail_strand'} . " had strandedness < $min_strandedness\n";
-    print $stats{'num_fail_varcount'} . " had var_count < $min_var_count\n";
-    print $stats{'num_fail_varfreq'} . " had var_freq < $min_var_freq\n";
+    print STDERR $stats{'num_variants'} . " variants\n";
+    print STDERR $stats{'num_no_readcounts'} . " failed to get readcounts for variant allele\n";
+    print STDERR $stats{'num_fail_pos'} . " had read position < $min_read_pos\n";
+    print STDERR $stats{'num_fail_strand'} . " had strandedness < $min_strandedness\n";
+    print STDERR $stats{'num_fail_varcount'} . " had var_count < $min_var_count\n";
+    print STDERR $stats{'num_fail_varfreq'} . " had var_freq < $min_var_freq\n";
 
-    print $stats{'num_fail_mmqs'} . " had mismatch qualsum difference > $max_mm_qualsum_diff\n";
-    print $stats{'num_fail_var_mmqs'} . " had variant MMQS > $max_var_mm_qualsum\n" if($stats{'num_fail_var_mmqs'});
-    print $stats{'num_fail_mapqual'} . " had mapping quality difference > $max_mapqual_diff\n";
-    print $stats{'num_fail_readlen'} . " had read length difference > $max_readlen_diff\n";
-    print $stats{'num_fail_dist3'} . " had var_distance_to_3' < $min_var_dist_3\n";
+    print STDERR $stats{'num_fail_mmqs'} . " had mismatch qualsum difference > $max_mm_qualsum_diff\n";
+    print STDERR $stats{'num_fail_var_mmqs'} . " had variant MMQS > $max_var_mm_qualsum\n" if($stats{'num_fail_var_mmqs'});
+    print STDERR $stats{'num_fail_mapqual'} . " had mapping quality difference > $max_mapqual_diff\n";
+    print STDERR $stats{'num_fail_readlen'} . " had read length difference > $max_readlen_diff\n";
+    print STDERR $stats{'num_fail_dist3'} . " had var_distance_to_3' < $min_var_dist_3\n";
 
-    print $stats{'num_pass_filter'} . " passed the strand filter\n";
+    print STDERR $stats{'num_pass_filter'} . " passed the strand filter\n";
 
     return(0);
 }
