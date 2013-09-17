@@ -26,6 +26,10 @@ my $header = <<EOF;
 ##INFO=<ID=SAMPLE,Number=1,Type=String,Description="Name of Sample eg. patient identifier">
 ##INFO=<ID=GENE,Number=1,Type=String,Description="Name of gene">
 ##INFO=<ID=AA,Number=1,Type=String,Description="Amino acid change">
+##INFO=<ID=DF_LOWER,Number=1,Type=Integer,Description="Lower bound on the tumor/normal difference in allele fraction">
+##INFO=<ID=NSYN,Number=1,Type=Integer,Description="Non-synonymous">
+##INFO=<ID=NSPL,Number=1,Type=Integer,Description="Splicing Region">
+##INFO=<ID=SNP,Number=1,Type=Integer,Description="Presence in dbSnp132: 0 - not present, 1 - present, 2 - present with different allele">
 ##FORMAT=<ID=ABQ,Number=1,Type=Integer,Description="Average quality of variant-supporting bases">
 ##FORMAT=<ID=AD,Number=1,Type=Integer,Description="Depth of variant-supporting reads">
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Total Read Depth">
@@ -53,6 +57,9 @@ while (<STDIN>) {
        $gene, $CCDS, $sense, $exon_N, $codon, $AA) = split "\t";
 
     my ( $chr, undef , undef ) = split(/:|-/, $chr_pos);
+
+    if ($tf eq NA) { $tf = 0; }
+    if ($nf eq NA) { $nf = 0; }
 
 #############################################
 ### LEFT-ALIGN INDELS
@@ -84,7 +91,7 @@ while (<STDIN>) {
     my $ALT = $var;
     my $QUAL = ".";
     my $FILTER = ".";
-    my $INFO = "SAMPLE=$case;GENE=$gene;AA=$AA";
+    my $INFO = "SAMPLE=$case;GENE=$gene;AA=$AA;DF_LOWER=$tf_nf_lower;NSYN=$nsyn;NSPL=$Nspl;SNP=$typeSNP";
     my $FORMAT = join ":", ("ABQ", "AD", "DP", "FREQ");
     my $tumor = join ":", ($t_qual, $t_vardepth, $t_totdepth, $tf);
     my $normal = join ":", ($n_qual, $n_vardepth, $n_totdepth, $nf);
