@@ -1,0 +1,22 @@
+#!/usr/bin/env perl
+
+use strict; 
+use warnings;
+#use Data::Dumper;
+use List::Util qw(first);
+
+my @input_field_names = ();
+my %hash = ();
+while (<>) { 
+    chomp;
+    if ($. == 1) { 
+	### READ COLUMN NAMES
+	@input_field_names = split(/\t/); 
+	print "$_\n";
+	next;
+    }
+    
+    @hash{@input_field_names} = split(/\t/);
+    map { $_ = "" unless defined } @hash{@input_field_names};
+    print join("\t", @hash{@input_field_names}), "\n";
+}

@@ -1,9 +1,9 @@
 #!/bin/awk -f
-BEGIN
-{
+BEGIN{
     OFS=FS="\t"
 } 
 { 
     split($25,chrpos,":"); 
-    print chrpos[1],chrpos[2],$0
+    split(chrpos[2],pos,"-"); 
+    print chrpos[1],pos[1],pos[2],$0
 }
