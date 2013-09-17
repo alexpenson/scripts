@@ -13,12 +13,12 @@ while (<>) {
     chomp;
     if ($. == 1) { 
 	### READ COLUMN NAMES
-	@input_field_names = split(/\t/); 
+	@input_field_names = split(/\t/, $_, -1); 
 	print "$_\n";
 	next;
     }
-    
-    @hash{@input_field_names} = split(/\t/);
-    map { $_ = "" unless defined } @hash{@input_field_names};
+
+    ## -1 tells split to include empty fields at end of line    
+    @hash{@input_field_names} = split(/\t/, $_, -1); 
     print join("\t", @hash{@input_field_names}), "\n";
 }
