@@ -58,8 +58,8 @@ while (<STDIN>) {
 
     my ( $chr, undef , undef ) = split(/:|-/, $chr_pos);
 
-    if ($tf eq NA) { $tf = 0; }
-    if ($nf eq NA) { $nf = 0; }
+    if ($tf eq "NA") { $tf = 0; }
+    if ($nf eq "NA") { $nf = 0; }
 
 #############################################
 ### LEFT-ALIGN INDELS
