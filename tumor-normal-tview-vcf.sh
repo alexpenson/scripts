@@ -39,12 +39,16 @@ FNR==2{  \
 while read line; do
     if [[ ${line:0:1} = "#" ]]; then continue; fi
     ### split line by tab
-    array=(${line//\t/})
+    array=(${line//\t/ })
     ### assume chr:pos if there is a colon in the first field
     if [[ ${array[0]} == *:* ]]; then
-	chrpos=(${line//:/})
-	chr=${chrpos[0]}
-	pos=${chrpos[1]}
+	chrpos=${array[0]}
+	echo $chrpos
+	### split by colon
+	chrpos_array=(${chrpos//:/ })
+	echo $chrpos_array
+	chr=${chrpos_array[0]}
+	pos=${chrpos_array[1]}
     else
     ### else assume chr pos are the first two fields
 	chr=${array[0]}
@@ -52,6 +56,7 @@ while read line; do
     fi
     pos=$(( $pos - $offset ))
     pos=$chr:$pos
+
 
     #############################################
     ### COPY THE INPUT LINE
