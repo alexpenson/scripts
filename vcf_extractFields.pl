@@ -76,10 +76,15 @@ foreach my $vcf_filename (@ARGV) {
 	$fields{ALT} = $$x{ALT}[0]; ### choose the primary alternate allele
 
 	foreach my $sample (@samples) {
+	    $$x{gtypes}{$sample}{DP} =~ s/\./0/;
+	    $$x{gtypes}{$sample}{FREQ} =~ s/\./0/;
+	    $$x{gtypes}{$sample}{AD} =~ s/\./0/;
+	    $$x{gtypes}{$sample}{ADF} =~ s/\./0/;
+	    
 	    $fields{$sample."_FREQ"} = $$x{gtypes}{$sample}{FREQ};
 	    $fields{$sample."_DP"} = $$x{gtypes}{$sample}{DP};
 	    $fields{$sample."_AFF"} = 0;
-	    if (defined $$x{gtypes}{$sample}{AD} && $$x{gtypes}{$sample}{AD} > 0) {
+	    if ($$x{gtypes}{$sample}{AD} > 0) {
 		$fields{$sample."_AFF"} = 100 * $$x{gtypes}{$sample}{ADF} / $$x{gtypes}{$sample}{AD};
 		$fields{$sample."_AFF"} = sprintf("%.1f", $fields{$sample."_AFF"});
 	    }
