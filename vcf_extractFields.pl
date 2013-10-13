@@ -3,67 +3,142 @@ use strict;
 use warnings;
 use Vcf;
 use Data::Dumper;
-use IPC::Open3;
 
-my $vcf_filename = shift;
-my %prior;
-$prior{"b"} = shift;
-$prior{"n1"} = shift;
-$prior{"n2"} = shift;
-$prior{"t1"} = shift;
-$prior{"t2"} = shift;
+my @samples = ("b", "n1", "n2", "t1", "t2");
 
-my @tumor_normal_pairs = (
-    [ "t1", "b" ],
-    [ "t1", "n1" ],
-    [ "t1", "n2" ],
-    [ "t2", "b" ],
-    [ "t2", "n1" ],
-    [ "t2", "n2" ],
-    );
+#############################################
+### PRINT HEADER LINE
+my @cols = ("SAMPLE", "CHROM", "POS", "ID", "REF", "ALT",
+	    "b_FREQ", "b_DP", "b_AFF",
+	    "n1_FREQ", "n1_DP", "n1_AFF", 
+	    "n2_FREQ", "n2_DP", "n2_AFF",
+	    "normal_FREQ", "normal_DP",
+	    "t1_FREQ", "t1_DP", "t1_AFF",
+	    "t2_FREQ", "t2_DP", "t2_AFF", 
+	    "tumor_FREQ", "tumor_DP",
+	    "EFFECT", "IMPACT", "FUNCLASS", "CODON", "AA", "AA_LEN", "GENE", "BIOTYPE", "CODING", "TRID", "EXON_RANK",
+	    "dbSNPBuildID", "COSMIC_NSAMP", "N_PATIENTS_NORMAL");
+print "#", join("\t", @cols), "\n";
 
-my $vcf = Vcf->new(file=>$vcf_filename);
+#############################################
+### DEFINE COLUMN VARIABLES
+my %fields;
+map { $fields{$_} = "" } @cols;
 
-$vcf->parse_header();
-foreach my $row (@tumor_normal_pairs) { 
-    my ($tumor, $normal) = @$row;
-    my $quality_score_name = "SAVI_" . $tumor . "_" . $normal;
-    $vcf->add_header_line({key=>'INFO', ID=>$quality_score_name,Number=>1,Type=>'Integer',Description=>"P-value that $tumor and $normal are different as calculated by SAVI"});
-}
-print $vcf->format_header();
-    
-while (my $x = $vcf->next_data_hash()) {
-    foreach my $row (@tumor_normal_pairs) { 
-	my ($tumor, $normal) = @$row;
-	my $quality_score_name = "SAVI_" . $tumor . "_" . $normal;
-	my @tumor_normal_1p = ($$x{gtypes}{$tumor}{ABQ},
-			       $$x{gtypes}{$tumor}{AD},
-			       $$x{gtypes}{$tumor}{SDP},
-			       $$x{gtypes}{$normal}{ABQ},
-			       $$x{gtypes}{$normal}{AD},
-			       $$x{gtypes}{$normal}{SDP}
-	    );
-	foreach (@tumor_normal_1p) {
-	    $_ = 0 if $_ eq ".";
+#############################################
+### LOOP OVER INPUT FILES
+foreach my $vcf_filename (@ARGV) {
+    my $vcf = Vcf->new(file=>$vcf_filename);
+    $vcf->parse_header();
+
+#############################################
+### PARSE LINES FOR VARIANTS WITH HIGH OR MODERATE EFFECT
+    while (my $line = $vcf->next_line()) {
+	my $variant_impact;
+	if ( $line =~ /HIGH/ ) {
+	    $variant_impact = "HIGH";
+	} elsif ( $line =~ /MODERATE/ ) { 
+	    $variant_impact = "MODERATE";
+	} else {
+	    next;
+	}
+	my $x = $vcf->next_data_hash($line);
+
+	### DEBUG
+	# print Dumper($x);
+	# last;
+
+#############################################
+### EXTRACT FIELDS
+	$fields{CHROM} = $$x{CHROM};
+	$fields{POS} = $$x{POS};
+	$fields{ID} = $$x{ID};
+	$fields{REF} = $$x{REF};
+	$fields{ALT} = $$x{ALT}[0]; ### choose the primary alternate allele
+
+	foreach my $sample (@samples) {
+	    $fields{$sample."_FREQ"} = $$x{gtypes}{$sample}{FREQ};
+	    $fields{$sample."_DP"} = $$x{gtypes}{$sample}{DP};
+	    $fields{$sample."_AFF"} = 0;
+	    if ($$x{gtypes}{$sample}{AD} != 0) {
+		$fields{$sample."_AFF"} = 100 * $$x{gtypes}{$sample}{ADF} / $$x{gtypes}{$sample}{AD};
+		$fields{$sample."_AFF"} = sprintf("%.1f", $fields{$sample."_AFF"});
+	    }
 	}
 
-	my $string_1p = join "\t", ("1", @tumor_normal_1p);
-#    print "$string_1p\n";
-	#my $string_1p = join "\\t", (1,23,5,40,23,0,100), "\n";
-	my $pval_string = `echo -e "$string_1p" | savi_poster -pd $prior{"$tumor"} $prior{"$normal"} | savi_comp 2 0`;
-	chomp($pval_string);
-	my (undef, $pval) = split(/\t/, $pval_string); ### extract p-value (second column)
-	#print "$pval\t";
-#	print "@tumor_normal_1p $pval\n";
+#############################################
+### POOLED WGA TUMOR/NORMAL SAMPLES
+	$fields{normal_DP} = $$x{gtypes}{n1}{DP} + $$x{gtypes}{n2}{DP};
+	if ($fields{normal_DP} != 0) {
+	    $fields{normal_FREQ} = ($$x{gtypes}{n1}{FREQ} * $$x{gtypes}{n1}{DP} + $$x{gtypes}{n2}{FREQ} * $$x{gtypes}{n2}{DP}) / $fields{normal_DP};
+	    $fields{normal_FREQ} = sprintf("%.2f",$fields{normal_FREQ})
+	}
+	$fields{tumor_DP} = $$x{gtypes}{t1}{DP} + $$x{gtypes}{t2}{DP};
+	if ($fields{tumor_DP} != 0) {
+	    $fields{tumor_FREQ} = ($$x{gtypes}{t1}{FREQ} * $$x{gtypes}{t1}{DP} + $$x{gtypes}{t2}{FREQ} * $$x{gtypes}{t2}{DP}) / $fields{tumor_DP};
+	    $fields{tumor_FREQ} = sprintf("%.2f",$fields{tumor_FREQ})
+	}
 
-### convert to a phred score
-	my $phred = 999; 
-	if ($pval > 0 ) { 
-	    $phred = int( 0.5 + -10 * log($pval) / log(10));
-	}; 
-	#print "$phred\n";
+#############################################
+### PARSE THE snpEff EFF FIELD
+	my @effs = split( /,/, $$x{INFO}{EFF});
+	foreach my $eff (@effs) {
+	    if ($eff =~ /(\w+)\((.*)\)/) {
+		$fields{"EFFECT"} = $1;
+		### assume no $ERRORS, $WARNINGS
+		@fields{("IMPACT", "FUNCLASS", "CODON", "AA", "AA_LEN", "GENE", "BIOTYPE", "CODING", "TRID", "EXON_RANK")}
+		= split(/\|/, $2);
+### SELECT THE FIRST HIGH OR ELSE THE FIRST MODERATE
+### DO NOT PARSE FURTHER THAN NECESSARY
+		if ($fields{IMPACT} eq $variant_impact) { last }
+	    }
+	}
 
-	$$x{INFO}{$quality_score_name} = $phred;
+#############################################
+### REMAINING INFO FIELDS
+	$fields{dbSNPBuildID} = $$x{INFO}{dbSNPBuildID};
+	$fields{COSMIC_NSAMP} = $$x{INFO}{COSMIC_NSAMP};
+	$fields{N_PATIENTS_NORMAL} = $$x{INFO}{N};
+
+#############################################
+### PRINT ALL FIELDS	
+	print join("\t", @fields{@cols}), "\n";
     }
-    print $vcf->format_line($x);
 }
+
+exit;
+
+# 	foreach my $row (@tumor_normal_pairs) { 
+# 	    my ($tumor, $normal) = @$row;
+# 	my $quality_score_name = "SAVI_" . $tumor . "_" . $normal;
+# 	my @tumor_normal_1p = ($$x{gtypes}{$tumor}{ABQ},
+# 			       $$x{gtypes}{$tumor}{AD},
+# 			       $$x{gtypes}{$tumor}{SDP},
+# 			       $$x{gtypes}{$normal}{ABQ},
+# 			       $$x{gtypes}{$normal}{AD},
+# 			       $$x{gtypes}{$normal}{SDP}
+# 	    );
+# 	foreach (@tumor_normal_1p) {
+# 	    $_ = 0 if $_ eq ".";
+# 	}
+
+# 	my $string_1p = join "\t", ("1", @tumor_normal_1p);
+# #    print "$string_1p\n";
+# 	#my $string_1p = join "\\t", (1,23,5,40,23,0,100), "\n";
+# 	my $pval_string = `echo -e "$string_1p" | savi_poster -pd $prior{"$tumor"} $prior{"$normal"} | savi_comp 2 0`;
+# 	chomp($pval_string);
+# 	my (undef, $pval) = split(/\t/, $pval_string); ### extract p-value (second column)
+# 	#print "$pval\t";
+# #	print "@tumor_normal_1p $pval\n";
+
+# ### convert to a phred score
+# 	my $phred = 999; 
+# 	if ($pval > 0 ) { 
+# 	    $phred = int( 0.5 + -10 * log($pval) / log(10));
+# 	}; 
+# 	#print "$phred\n";
+
+# 	$$x{INFO}{$quality_score_name} = $phred;
+#     }
+#     print $vcf->format_line($x);
+# }
