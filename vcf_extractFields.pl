@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Vcf;
 use Data::Dumper;
+use File::Basename;
 
 my @samples = ("b", "n1", "n2", "t1", "t2");
 
@@ -32,6 +33,11 @@ foreach my $vcf_filename (@ARGV) {
     $vcf->parse_header();
 
 #############################################
+### FILENAME UP TO THE FIRST . IS TAKEN 
+### AS THE PATIENT NAME
+    my $patient = (split /\./, basename($vcf_filename))[0];
+    
+#############################################
 ### PARSE LINES FOR VARIANTS WITH HIGH OR MODERATE EFFECT
     while (my $line = $vcf->next_line()) {
 	my $variant_impact;
@@ -50,6 +56,7 @@ foreach my $vcf_filename (@ARGV) {
 
 #############################################
 ### EXTRACT FIELDS
+	$fields{SAMPLE} = $patient;
 	$fields{CHROM} = $$x{CHROM};
 	$fields{POS} = $$x{POS};
 	$fields{ID} = $$x{ID};
@@ -107,38 +114,3 @@ foreach my $vcf_filename (@ARGV) {
 }
 
 exit;
-
-# 	foreach my $row (@tumor_normal_pairs) { 
-# 	    my ($tumor, $normal) = @$row;
-# 	my $quality_score_name = "SAVI_" . $tumor . "_" . $normal;
-# 	my @tumor_normal_1p = ($$x{gtypes}{$tumor}{ABQ},
-# 			       $$x{gtypes}{$tumor}{AD},
-# 			       $$x{gtypes}{$tumor}{SDP},
-# 			       $$x{gtypes}{$normal}{ABQ},
-# 			       $$x{gtypes}{$normal}{AD},
-# 			       $$x{gtypes}{$normal}{SDP}
-# 	    );
-# 	foreach (@tumor_normal_1p) {
-# 	    $_ = 0 if $_ eq ".";
-# 	}
-
-# 	my $string_1p = join "\t", ("1", @tumor_normal_1p);
-# #    print "$string_1p\n";
-# 	#my $string_1p = join "\\t", (1,23,5,40,23,0,100), "\n";
-# 	my $pval_string = `echo -e "$string_1p" | savi_poster -pd $prior{"$tumor"} $prior{"$normal"} | savi_comp 2 0`;
-# 	chomp($pval_string);
-# 	my (undef, $pval) = split(/\t/, $pval_string); ### extract p-value (second column)
-# 	#print "$pval\t";
-# #	print "@tumor_normal_1p $pval\n";
-
-# ### convert to a phred score
-# 	my $phred = 999; 
-# 	if ($pval > 0 ) { 
-# 	    $phred = int( 0.5 + -10 * log($pval) / log(10));
-# 	}; 
-# 	#print "$phred\n";
-
-# 	$$x{INFO}{$quality_score_name} = $phred;
-#     }
-#     print $vcf->format_line($x);
-# }
