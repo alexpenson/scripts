@@ -37,6 +37,7 @@ my %fields;
 foreach my $vcf_filename (@ARGV) {
     my $vcf = Vcf->new(file=>$vcf_filename, version => '4.1', silent => 'true');
     $vcf->parse_header(silent => 'true');
+    my @samples_in_file = $vcf->get_samples();
 
 #############################################
 ### FILENAME UP TO THE FIRST . IS TAKEN 
@@ -75,11 +76,11 @@ foreach my $vcf_filename (@ARGV) {
 	$fields{REF} = $$x{REF};
 	$fields{ALT} = $$x{ALT}[0]; ### choose the primary alternate allele
 
-	foreach my $sample (@samples) {
-	    $$x{gtypes}{$sample}{DP} =~ s/\./0/;
-	    $$x{gtypes}{$sample}{FREQ} =~ s/\./0/;
-	    $$x{gtypes}{$sample}{AD} =~ s/\./0/;
-	    $$x{gtypes}{$sample}{ADF} =~ s/\./0/;
+	foreach my $sample (@samples_in_file) {
+	    if ($$x{gtypes}{$sample}{DP} eq ".") { $$x{gtypes}{$sample}{DP} = 0 }; 
+	    if ($$x{gtypes}{$sample}{FREQ} eq ".") { $$x{gtypes}{$sample}{FREQ} = 0 }; 
+	    if ($$x{gtypes}{$sample}{AD} eq ".") { $$x{gtypes}{$sample}{AD} = 0 }; 
+	    if ($$x{gtypes}{$sample}{ADF} eq ".") { $$x{gtypes}{$sample}{ADF} = 0 }; 
 	    
 	    $fields{$sample."_FREQ"} = $$x{gtypes}{$sample}{FREQ};
 	    $fields{$sample."_DP"} = $$x{gtypes}{$sample}{DP};
