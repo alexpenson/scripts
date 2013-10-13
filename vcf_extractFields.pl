@@ -4,6 +4,12 @@ use warnings;
 use Vcf;
 use Data::Dumper;
 use File::Basename;
+use Getopt::Long;
+
+#############################################
+### NON SYNONYMOUS ONLY, BY DEFAULT
+my $inc_syn = 0;
+GetOptions ('inc_syn' => \$inc_syn );
 
 my @samples = ("b", "n1", "n2", "t1", "t2");
 
@@ -38,13 +44,19 @@ foreach my $vcf_filename (@ARGV) {
     my $patient = (split /\./, basename($vcf_filename))[0];
     
 #############################################
-### PARSE LINES FOR VARIANTS WITH HIGH OR MODERATE EFFECT
+### PARSE LINES 
+### VARIANTS WITH HIGH OR MODERATE EFFECT ONLY
+### (UNLESS inc_syn OPTION IS SET)
     while (my $line = $vcf->next_line()) {
 	my $variant_impact;
 	if ( $line =~ /HIGH/ ) {
 	    $variant_impact = "HIGH";
 	} elsif ( $line =~ /MODERATE/ ) { 
 	    $variant_impact = "MODERATE";
+	} elsif ( $line =~ /LOW/ && $inc_syn ) { 
+	    $variant_impact = "LOW";
+	} elsif ( $line =~ /MODIFIER/ && $inc_syn ) { 
+	    $variant_impact = "MODIFIER";
 	} else {
 	    next;
 	}
@@ -67,7 +79,7 @@ foreach my $vcf_filename (@ARGV) {
 	    $fields{$sample."_FREQ"} = $$x{gtypes}{$sample}{FREQ};
 	    $fields{$sample."_DP"} = $$x{gtypes}{$sample}{DP};
 	    $fields{$sample."_AFF"} = 0;
-	    if ($$x{gtypes}{$sample}{AD} > 0) {
+	    if (defined $$x{gtypes}{$sample}{AD} && $$x{gtypes}{$sample}{AD} > 0) {
 		$fields{$sample."_AFF"} = 100 * $$x{gtypes}{$sample}{ADF} / $$x{gtypes}{$sample}{AD};
 		$fields{$sample."_AFF"} = sprintf("%.1f", $fields{$sample."_AFF"});
 	    }
