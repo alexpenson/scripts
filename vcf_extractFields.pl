@@ -24,13 +24,13 @@ print "#", join("\t", @cols), "\n";
 #############################################
 ### DEFINE COLUMN VARIABLES
 my %fields;
-map { $fields{$_} = "" } @cols;
+# map { $fields{$_} = "" } @cols;
 
 #############################################
 ### LOOP OVER INPUT FILES
 foreach my $vcf_filename (@ARGV) {
-    my $vcf = Vcf->new(file=>$vcf_filename);
-    $vcf->parse_header();
+    my $vcf = Vcf->new(file=>$vcf_filename, version => '4.1', silent => 'true');
+    $vcf->parse_header(silent => 'true');
 
 #############################################
 ### FILENAME UP TO THE FIRST . IS TAKEN 
@@ -67,7 +67,7 @@ foreach my $vcf_filename (@ARGV) {
 	    $fields{$sample."_FREQ"} = $$x{gtypes}{$sample}{FREQ};
 	    $fields{$sample."_DP"} = $$x{gtypes}{$sample}{DP};
 	    $fields{$sample."_AFF"} = 0;
-	    if ($$x{gtypes}{$sample}{AD} != 0) {
+	    if ($$x{gtypes}{$sample}{AD} > 0) {
 		$fields{$sample."_AFF"} = 100 * $$x{gtypes}{$sample}{ADF} / $$x{gtypes}{$sample}{AD};
 		$fields{$sample."_AFF"} = sprintf("%.1f", $fields{$sample."_AFF"});
 	    }
@@ -109,6 +109,7 @@ foreach my $vcf_filename (@ARGV) {
 
 #############################################
 ### PRINT ALL FIELDS	
+	$fields{$_} //= "" for @cols;
 	print join("\t", @fields{@cols}), "\n";
     }
 }
