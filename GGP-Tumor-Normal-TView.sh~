@@ -27,7 +27,7 @@ function list_join {
     for patient in "$@"; do
 # 	bam=$(echo /ifs/scratch/c2b2/rr_lab/shares/GGP/*/*/GRCh37_*_GGP-$N.pe.MarkDuplicates.bam)
 # 	bam_files=("${bam_files[@]}" $bam)
-	bam=$(echo /ifs/scratch/c2b2/rr_lab/shares/GGP/links/$patient*.bam)
+	bam=$(echo /ifs/scratch/c2b2/rr_lab/shares/GGP/links_numbered/*-$patient-*.bam)
 	bam_files=("${bam_files[@]}" $bam)
     done
 #fi
@@ -36,12 +36,25 @@ echo "${bam_files[@]}"
 
 while read line; do
     if [[ ${line:0:1} = "#" ]]; then continue; fi
+    ### split line by tab
     array=(${line//\t/})
-    chr=${array[0]}
-    pos=${array[1]}
+    ### assume chr:pos if there is a colon in the first field
+    if [[ ${array[0]} == *:* ]]; then
+	first_field=${array[0]}
+	chrpos=("${first_field//:/}")
+	chr=${chrpos[0]}
+	pos=${chrpos[1]}
+	echo pos $chrpos
+    
+    else
+    ### else assume chr pos are the first two fields
+	chr=${array[0]}
+	pos=${array[1]}
+    fi
     pos=$(( $pos - $offset ))
     pos=$chr:$pos
-#    echo $pos
+
+    echo $pos
     tput bold
     tput setaf 4 ### blue
     echo $line
