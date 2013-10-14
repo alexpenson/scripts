@@ -30,7 +30,6 @@ print "#", join("\t", @cols), "\n";
 #############################################
 ### DEFINE COLUMN VARIABLES
 my %fields;
-# map { $fields{$_} = "" } @cols;
 
 #############################################
 ### LOOP OVER INPUT FILES
@@ -62,6 +61,7 @@ foreach my $vcf_filename (@ARGV) {
 	    next;
 	}
 	my $x = $vcf->next_data_hash($line);
+	map { $fields{$_} = "" } @cols;
 
 	### DEBUG
 	# print Dumper($x);
@@ -94,11 +94,13 @@ foreach my $vcf_filename (@ARGV) {
 #############################################
 ### POOLED WGA TUMOR/NORMAL SAMPLES
 	$fields{normal_DP} = $$x{gtypes}{n1}{DP} + $$x{gtypes}{n2}{DP};
+	$fields{normal_FREQ} = 0;
 	if ($fields{normal_DP} != 0) {
 	    $fields{normal_FREQ} = ($$x{gtypes}{n1}{FREQ} * $$x{gtypes}{n1}{DP} + $$x{gtypes}{n2}{FREQ} * $$x{gtypes}{n2}{DP}) / $fields{normal_DP};
 	    $fields{normal_FREQ} = sprintf("%.2f",$fields{normal_FREQ})
 	}
 	$fields{tumor_DP} = $$x{gtypes}{t1}{DP} + $$x{gtypes}{t2}{DP};
+	$fields{tumor_FREQ} = 0;
 	if ($fields{tumor_DP} != 0) {
 	    $fields{tumor_FREQ} = ($$x{gtypes}{t1}{FREQ} * $$x{gtypes}{t1}{DP} + $$x{gtypes}{t2}{FREQ} * $$x{gtypes}{t2}{DP}) / $fields{tumor_DP};
 	    $fields{tumor_FREQ} = sprintf("%.2f",$fields{tumor_FREQ})
