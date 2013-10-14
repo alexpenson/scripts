@@ -88,6 +88,7 @@ foreach my $vcf_filename (@ARGV) {
 	    if (grep {$_ eq $sample} ("b","n1","n2")) {
 		$fields{$sample."_GQ"} = $$x{gtypes}{$sample}{GQ};
 	    } else {
+		if ($$x{gtypes}{$sample}{PVAL} == 0) {$$x{gtypes}{$sample}{PVAL} = 1E-100;}
 		$fields{$sample."_QUAL"} = -10 * log( $$x{gtypes}{$sample}{PVAL} ) / log(10);	       
 	    }
 	    $fields{$sample."_AFF"} = 0;
