@@ -9,7 +9,9 @@ use Getopt::Long;
 #############################################
 ### NON SYNONYMOUS ONLY, BY DEFAULT
 my $inc_syn = 0;
-GetOptions ('inc_syn' => \$inc_syn );
+my $filter = 0;
+GetOptions ('inc_syn' => \$inc_syn 
+	    'filter' => \$filter);
 
 my @samples = ("b", "n1", "n2", "t1", "t2");
 
@@ -88,7 +90,7 @@ foreach my $vcf_filename (@ARGV) {
 	    if (grep {$_ eq $sample} ("b","n1","n2")) {
 		$fields{$sample."_GQ"} = $$x{gtypes}{$sample}{GQ};
 	    } else {
-		if ($$x{gtypes}{$sample}{PVAL} == 0) {$$x{gtypes}{$sample}{PVAL} = 1E-100;}
+		if ($$x{gtypes}{$sample}{PVAL} == 0) {$$x{gtypes}{$sample}{PVAL} = 1E-100 };
 		$fields{$sample."_QUAL"} = -10 * log( $$x{gtypes}{$sample}{PVAL} ) / log(10);	       
 	    }
 	    $fields{$sample."_AFF"} = 0;
@@ -137,10 +139,22 @@ foreach my $vcf_filename (@ARGV) {
 	$fields{dbSNPBuildID} = $$x{INFO}{dbSNPBuildID};
 	$fields{COSMIC_NSAMP} = $$x{INFO}{COSMIC_NSAMP};
 	$fields{N_PATIENTS_NORMAL} = $$x{INFO}{N};
+	$fields{UNAFFECTED_INDIVIDUALS} = $$x{INFO}{NMutPerID};
+	$fields{$_} //= "" for @cols;
 
 #############################################
+### FILTER
+	if ($filter) {
+	    next if ($fields{tumor_FREQ} < 20);
+	    next if ($fields{t1_FREQ} < 10);
+	    next if ($fields{t2_FREQ} < 10);
+	    next if ($fields{n1_FREQ} > 10);
+	    next if ($fields{n2_FREQ} > 10);
+	    next if ($fields{b_FREQ} > 3);
+	    next unless ($fields{dbSNPBuildID} eq "" || $fields{dbSNPBuildID} > 135);
+	}
+#############################################
 ### PRINT ALL FIELDS	
-	$fields{$_} //= "" for @cols;
 	print join("\t", @fields{@cols}), "\n";
     }
 }
