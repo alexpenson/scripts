@@ -10,7 +10,7 @@ use Getopt::Long;
 ### NON SYNONYMOUS ONLY, BY DEFAULT
 my $inc_syn = 0;
 my $filter = 0;
-GetOptions ('inc_syn' => \$inc_syn 
+GetOptions ('inc_syn' => \$inc_syn, 
 	    'filter' => \$filter);
 
 my @samples = ("b", "n1", "n2", "t1", "t2");
@@ -26,7 +26,7 @@ my @cols = ("SAMPLE", "CHROM", "POS", "ID", "REF", "ALT",
 	    "t2_FREQ", "t2_DP", "t2_AFF", "t2_QUAL", 
 	    "tumor_FREQ", "tumor_DP", "tumor_QUAL",
 	    "EFFECT", "IMPACT", "FUNCLASS", "CODON", "AA", "AA_LEN", "GENE", "BIOTYPE", "CODING", "TRID", "EXON_RANK",
-	    "dbSNPBuildID", "COSMIC_NSAMP", "N_PATIENTS_NORMAL");
+	    "dbSNPBuildID", "COSMIC_NSAMP", "N_PATIENTS_NORMAL", "UNAFFECTED_INDIVIDUALS");
 print "#", join("\t", @cols), "\n";
 
 #############################################
