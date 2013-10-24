@@ -57,8 +57,6 @@ foreach my $vcf_filename (@ARGV) {
 	    $variant_impact = "MODERATE";
 	} elsif ( $line =~ /LOW/ && $inc_syn ) { 
 	    $variant_impact = "LOW";
-	} elsif ( $line =~ /MODIFIER/ && $inc_syn ) { 
-	    $variant_impact = "MODIFIER";
 	} else {
 	    next;
 	}
