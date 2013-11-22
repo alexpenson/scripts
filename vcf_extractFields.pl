@@ -9,8 +9,10 @@ use Getopt::Long;
 #############################################
 ### NON SYNONYMOUS ONLY, BY DEFAULT
 my $inc_syn = 0;
+my $inc_mod = 0;
 my $filter = 0;
 GetOptions ('inc_syn' => \$inc_syn, 
+	    'inc_mod' => \$inc_mod, 
 	    'filter' => \$filter);
 
 my @samples = ("b", "n1", "n2", "t1", "t2");
@@ -48,15 +50,17 @@ foreach my $vcf_filename (@ARGV) {
 #############################################
 ### PARSE LINES 
 ### VARIANTS WITH HIGH OR MODERATE EFFECT ONLY
-### (UNLESS inc_syn OPTION IS SET)
+### (UNLESS inc_syn or inc_mod OPTION IS SET)
     while (my $line = $vcf->next_line()) {
-	my $variant_impact;
+	my $variant_impact; ## the highest impact
 	if ( $line =~ /HIGH/ ) {
 	    $variant_impact = "HIGH";
 	} elsif ( $line =~ /MODERATE/ ) { 
 	    $variant_impact = "MODERATE";
-	} elsif ( $line =~ /LOW/ && $inc_syn ) { 
+	} elsif ( $line =~ /LOW/ && ( $inc_syn || $inc_mod ) ) { 
 	    $variant_impact = "LOW";
+	} elsif ( $line =~ /MODIFIER/ && $inc_mod ) { 
+	    $variant_impact = "MODIFIER";
 	} else {
 	    next;
 	}
@@ -144,11 +148,17 @@ foreach my $vcf_filename (@ARGV) {
 ### FILTER
 	if ($filter) {
 	    next if ($fields{tumor_FREQ} < 20);
+	    next if ($fields{tumor_QUAL} < 60);
 	    next if ($fields{t1_FREQ} < 10);
 	    next if ($fields{t2_FREQ} < 10);
 	    next if ($fields{n1_FREQ} > 10);
 	    next if ($fields{n2_FREQ} > 10);
 	    next if ($fields{b_FREQ} > 3);
+	    if ($fields{b_DP} eq "") {
+		next if ($fields{normal_DP} < 40);
+	    } else { 
+		next if ($fields{b_DP} < 20);
+	    }
 	    next unless ($fields{dbSNPBuildID} eq "" || $fields{dbSNPBuildID} > 135);
 	}
 #############################################
