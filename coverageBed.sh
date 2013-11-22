@@ -28,8 +28,8 @@ echo $chr
 mkfifo $input_bam.$chr.fifo
 mkfifo $tabixed_bed.$chr.fifo
 
-/ifs/scratch/c2b2/rr_lab/shares/samtools/samtools view -b $input_bam $chr > data &
-/ifs/scratch/c2b2/rr_lab/shares/tabix/tabix $tabixed_bed $chr > windows &
+/ifs/scratch/c2b2/rr_lab/shares/samtools/samtools view -b $input_bam $chr > $input_bam.$chr.fifo &
+/ifs/scratch/c2b2/rr_lab/shares/tabix/tabix $tabixed_bed $chr > $tabixed_bed.$chr.fifo &
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/nfs/apps/gcc/4.6.0/lib64
 /ifs/scratch/c2b2/rr_lab/shares/bedtools/bin/bedtools coverage \
